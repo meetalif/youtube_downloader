@@ -1,0 +1,19 @@
+name: youtube_downloader
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  waveui: ^0.2.5-alpha.1
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.0.0
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
