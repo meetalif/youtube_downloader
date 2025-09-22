@@ -1,0 +1,22 @@
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+
+part 'download_providers.g.dart';
+
+@riverpod
+class YoutubeFormats extends _$YoutubeFormats {
+  @override
+  AsyncValue<List<VideoStreamInfo>> build() => const AsyncValue.data([]);
+
+  Future<void> loadFormats(String url) async {
+    state = const AsyncValue.loading();
+    try {
+      final yt = YoutubeExplode();
+      final video = await yt.videos.get(url);
+      final manifest = await yt.videos.streamsClient.getManifest(video.id);
+      state = AsyncValue.data(manifest.muxed.toList());
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+}
