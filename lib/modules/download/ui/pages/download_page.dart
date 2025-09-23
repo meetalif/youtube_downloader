@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart' show IconButton;
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:waveui/waveui.dart';
 import 'package:youtube_downloader/modules/download/providers/download_providers.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
@@ -109,33 +111,49 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                     itemCount: formats.length,
                     itemBuilder: (context, index) {
                       final item = formats[index];
-                      return Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: colorScheme.outlineDivider),
-                        ),
-                        child: Stack(
-                          children: [
-                            Center(
-                              child: Text(
-                                item.container.name,
-                                style: TextStyle(
-                                  color: colorScheme.outlineDivider.withValues(alpha: 0.5),
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.bold,
+                      return WaveTappable(
+                        onTap: () async {
+                          final downloadsDir = await getDownloadsDirectory();
+                          await FlutterDownloader.enqueue(
+                            url: item.url.toString(),
+                            headers: {},
+                            savedDir: downloadsDir!.path,
+                            fileName: "${item.qualityLabel}_${item.qualityLabel}.${item.container.name}".replaceAll(
+                              RegExp(r'[^\w\s.-]'),
+                              '_',
+                            ),
+                            showNotification: true,
+                            openFileFromNotification: true,
+                          );
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: colorScheme.outlineDivider),
+                          ),
+                          child: Stack(
+                            children: [
+                              Center(
+                                child: Text(
+                                  item.container.name,
+                                  style: TextStyle(
+                                    color: colorScheme.outlineDivider.withValues(alpha: 0.5),
+                                    fontSize: 48,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(item.qualityLabel, style: textTheme.h6),
-                                  Text('${item.size.totalMegaBytes.round()} MB', style: textTheme.body),
-                                ],
+                              Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(item.qualityLabel, style: textTheme.h6),
+                                    Text('${item.size.totalMegaBytes.round()} MB', style: textTheme.body),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     },
