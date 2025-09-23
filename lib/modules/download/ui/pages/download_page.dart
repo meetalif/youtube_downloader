@@ -10,7 +10,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:waveui/waveui.dart';
 import 'package:youtube_downloader/modules/download/providers/download_providers.dart';
 import 'package:youtube_downloader/modules/history/ui/pages/history_page.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:youtube_downloader/utils/newpipe_channel.dart';
 
 class DownloadPage extends ConsumerStatefulWidget {
   const DownloadPage({super.key});
@@ -121,13 +121,15 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                           final downloadsDir = await getDownloadsDirectory();
                           final video = ref.watch(youtubeInfoProvider).value;
                           final title = video?.title ?? "video";
-                          final quality = item.qualityLabel;
-                          final container = item.container.name;
+                          final quality = item.quality;
+                          final container = item.format.contains('/')
+                              ? item.format.split('/').last
+                              : item.format;
 
                           final safeFileName = "${title}_$quality.$container".replaceAll(RegExp(r'[^\w\s.-]'), '_');
 
                           await FlutterDownloader.enqueue(
-                            url: item.url.toString(),
+                            url: item.url,
                             headers: {},
                             savedDir: downloadsDir!.path,
                             fileName: safeFileName,
@@ -160,7 +162,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
     );
   }
 
-  Widget _buildFormatItem(StreamInfo? item) {
+  Widget _buildFormatItem(StreamItem? item) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return Container(
@@ -170,10 +172,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
       ),
       child: Stack(
         children: [
-          if (item?.container.name != null)
+          if (item?.format != null)
             Center(
               child: Text(
-                item!.container.name,
+                (item!.format.contains('/') ? item.format.split('/').last : item.format),
                 style: TextStyle(
                   color: colorScheme.outlineDivider.withValues(alpha: 0.5),
                   fontSize: 48,
@@ -185,8 +187,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(item?.qualityLabel ?? "1234p", style: textTheme.h6),
-                Text('${(item?.size.totalMegaBytes ?? 12).round()} MB', style: textTheme.body),
+                Text(item?.quality ?? "1234p", style: textTheme.h6),
+                // Size not known from NewPipe stream list by default
+                // Text('${(item?.size.totalMegaBytes ?? 12).round()} MB', style: textTheme.body),
               ],
             ),
           ),
@@ -195,7 +198,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
     );
   }
 
-  Widget _buildVideoInfo(Video? video) {
+  Widget _buildVideoInfo(VideoInfo? video) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
     return Column(
@@ -214,7 +217,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
               ),
               TextSpan(text: " on "),
               TextSpan(
-                text: DateFormat("d MMMM y 'at' hh:mm a").format(video?.publishDate ?? DateTime.now()),
+                text: video?.uploadDate.isNotEmpty == true
+                    ? video!.uploadDate
+                    : DateFormat("d MMMM y 'at' hh:mm a").format(DateTime.now()),
                 style: textTheme.small.copyWith(color: colorScheme.textPrimary, fontWeight: FontWeight.bold),
               ),
             ],
