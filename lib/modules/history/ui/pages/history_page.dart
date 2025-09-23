@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,8 +26,10 @@ class HistoryPage extends ConsumerWidget {
                 itemCount: tasks.length,
                 itemBuilder: (context, index) {
                   final task = tasks[index];
-                  FlutterDownloader.registerCallback((id, status, progress) => log("$id $status $progress"));
                   return WaveListTile(
+                    onTap: task.status == DownloadTaskStatus.complete
+                        ? () => FlutterDownloader.open(taskId: task.taskId)
+                        : null,
                     title: Text(task.filename ?? ""),
                     subtitle: Text(task.status.toString()),
                     trailing: task.status == DownloadTaskStatus.running

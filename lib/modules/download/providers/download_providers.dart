@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
@@ -14,7 +16,7 @@ class YoutubeFormats extends _$YoutubeFormats {
       final yt = YoutubeExplode();
       final video = await yt.videos.get(url);
       final manifest = await yt.videos.streamsClient.getManifest(video.id);
-      final streams = manifest.streams.toList();
+      final streams = manifest.streams.where((stream) => stream.container.name == "mp4").toList();
       state = AsyncValue.data(streams);
     } catch (e, st) {
       state = AsyncValue.error(e, st);

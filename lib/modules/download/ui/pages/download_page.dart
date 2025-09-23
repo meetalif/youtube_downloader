@@ -153,7 +153,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                   itemCount: 12,
                   itemBuilder: (context, index) => Skeletonizer(enabled: true, child: _buildFormatItem(null)),
                 ),
-                error: (err, st) => Center(child: Text("Error: $err")),
+                error: (err, st) => Center(child: Text("$err")),
               ),
         ],
       ),
