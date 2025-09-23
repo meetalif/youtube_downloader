@@ -1,11 +1,11 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart' show IconButton, MaterialPageRoute;
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:waveui/waveui.dart';
 import 'package:youtube_downloader/modules/download/providers/download_providers.dart';
@@ -46,6 +46,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
     final notifStatus = await Permission.notification.status;
     if (!notifStatus.isGranted) {
       await Permission.notification.request();
+    }
+    if (!await Permission.storage.request().isGranted) {
+      await Permission.storage.request();
     }
   }
 
@@ -145,8 +148,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                       return WaveTappable(
                         onTap: () async {
                           // Resolve a robust downloads directory
-                          var downloadsDir = await getDownloadsDirectory();
-                          downloadsDir ??= await getExternalStorageDirectory();
+                          var downloadsDir = Directory('/storage/emulated/0/Download');
                           final video = ref.watch(youtubeInfoProvider).value;
                           final title = video?.title ?? "video";
                           final quality = item.quality;
@@ -160,7 +162,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                           await FlutterDownloader.enqueue(
                             url: item.url,
                             headers: {},
-                            savedDir: downloadsDir!.path,
+                            savedDir: downloadsDir.path,
                             fileName: safeFileName,
                             showNotification: true,
                             openFileFromNotification: true,

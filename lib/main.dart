@@ -33,9 +33,7 @@ class MainApp extends StatelessWidget {
                       child: Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            WaveCircularProgressIndicator(),
-                          ],
+                          children: const [WaveCircularProgressIndicator()],
                         ),
                       ),
                     ),
