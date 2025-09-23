@@ -123,20 +123,58 @@ object NewPipeBridge: MethodChannel.MethodCallHandler {
                         val extractor = service.getStreamExtractor(handler)
                         extractor.fetchPage()
                         val streams = mutableListOf<Map<String, Any?>>()
-                        // Only include muxed (audio+video) streams where mimeType contains mp4
+                        fun extFromMime(mime: String): String {
+                            val lower = mime.lowercase()
+                            return when {
+                                lower.contains("mp4") && lower.contains("audio") && lower.contains("mpeg") -> "m4a"
+                                lower.contains("m4a") -> "m4a"
+                                lower.contains("webm") && lower.contains("audio") -> "webm"
+                                lower.contains("webm") && lower.contains("video") -> "webm"
+                                lower.contains("mp4") -> "mp4"
+                                else -> "mp4"
+                            }
+                        }
+                        // Muxed (audio+video)
                         extractor.videoStreams.forEach { vs ->
                             val mime = vs.format?.mimeType ?: ""
-                            if (mime.contains("mp4", ignoreCase = true)) {
-                                streams.add(
-                                    mapOf(
-                                        "url" to vs.url,
-                                        "format" to mime,
-                                        "quality" to vs.resolution,
-                                        "isVideoOnly" to false,
-                                        "isAudioOnly" to false
-                                    )
+                            streams.add(
+                                mapOf(
+                                    "url" to vs.url,
+                                    "format" to mime,
+                                    "quality" to vs.resolution,
+                                    "isVideoOnly" to false,
+                                    "isAudioOnly" to false,
+                                    "fileExtension" to extFromMime(mime)
                                 )
-                            }
+                            )
+                        }
+                        // Video-only
+                        extractor.videoOnlyStreams.forEach { vo ->
+                            val mime = vo.format?.mimeType ?: ""
+                            streams.add(
+                                mapOf(
+                                    "url" to vo.url,
+                                    "format" to mime,
+                                    "quality" to (vo.resolution ?: ""),
+                                    "isVideoOnly" to true,
+                                    "isAudioOnly" to false,
+                                    "fileExtension" to extFromMime(mime)
+                                )
+                            )
+                        }
+                        // Audio-only
+                        extractor.audioStreams.forEach { ao ->
+                            val mime = ao.format?.mimeType ?: ""
+                            streams.add(
+                                mapOf(
+                                    "url" to ao.url,
+                                    "format" to mime,
+                                    "quality" to (ao.averageBitrate ?: 0),
+                                    "isVideoOnly" to false,
+                                    "isAudioOnly" to true,
+                                    "fileExtension" to extFromMime(mime)
+                                )
+                            )
                         }
                         result.success(streams)
                     } catch (e: Exception) {

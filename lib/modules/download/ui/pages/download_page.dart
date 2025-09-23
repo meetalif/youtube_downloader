@@ -11,6 +11,7 @@ import 'package:waveui/waveui.dart';
 import 'package:youtube_downloader/modules/download/providers/download_providers.dart';
 import 'package:youtube_downloader/modules/history/ui/pages/history_page.dart';
 import 'package:youtube_downloader/utils/newpipe_channel.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 @pragma('vm:entry-point')
 void downloadCallback(String id, int status, int progress) {
@@ -35,6 +36,15 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
     super.initState();
     // Register to receive download progress notifications (system notifications handled by plugin)
     FlutterDownloader.registerCallback(downloadCallback);
+    _ensurePermissions();
+  }
+
+  Future<void> _ensurePermissions() async {
+    // Android 13+ notifications
+    final notifStatus = await Permission.notification.status;
+    if (!notifStatus.isGranted) {
+      await Permission.notification.request();
+    }
   }
 
   @override
@@ -132,13 +142,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                       final item = formats[index];
                       return WaveTappable(
                         onTap: () async {
-                          final downloadsDir = await getDownloadsDirectory();
+                          // Resolve a robust downloads directory
+                          var downloadsDir = await getDownloadsDirectory();
+                          downloadsDir ??= await getExternalStorageDirectory();
                           final video = ref.watch(youtubeInfoProvider).value;
                           final title = video?.title ?? "video";
                           final quality = item.quality;
-                          final container = item.format.contains('/')
-                              ? item.format.split('/').last
-                              : item.format;
+                          final container = item.fileExtension;
 
                           final safeFileName = "${title}_$quality.$container".replaceAll(RegExp(r'[^\w\s.-]'), '_');
 
@@ -189,7 +199,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
           if (item?.format != null)
             Center(
               child: Text(
-                (item!.format.contains('/') ? item.format.split('/').last : item.format),
+                (item!.fileExtension.toUpperCase()),
                 style: TextStyle(
                   color: colorScheme.outlineDivider.withValues(alpha: 0.5),
                   fontSize: 48,
@@ -202,8 +212,17 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(item?.quality ?? "1234p", style: textTheme.h6),
-                // Size not known from NewPipe stream list by default
-                // Text('${(item?.size.totalMegaBytes ?? 12).round()} MB', style: textTheme.body),
+                SizedBox(height: 4),
+                Text(
+                  item == null
+                      ? ''
+                      : item.isAudioOnly
+                          ? 'Audio Only'
+                          : item.isVideoOnly
+                              ? 'Video Only'
+                              : 'Audio + Video',
+                  style: textTheme.small,
+                ),
               ],
             ),
           ),

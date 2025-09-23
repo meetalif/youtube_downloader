@@ -31,12 +31,14 @@ class StreamItem {
   final String quality; // could be resolution like 1080p or bitrate label
   final bool isVideoOnly;
   final bool isAudioOnly;
+  final String fileExtension; // e.g. mp4 or m4a
   const StreamItem({
     required this.url,
     required this.format,
     required this.quality,
     required this.isVideoOnly,
     required this.isAudioOnly,
+    required this.fileExtension,
   });
 
   factory StreamItem.fromMap(Map map) => StreamItem(
@@ -45,6 +47,7 @@ class StreamItem {
         quality: '${map['quality'] ?? ''}',
         isVideoOnly: (map['isVideoOnly'] ?? false) as bool,
         isAudioOnly: (map['isAudioOnly'] ?? false) as bool,
+        fileExtension: (map['fileExtension'] ?? 'mp4') as String,
       );
 }
 
