@@ -12,6 +12,13 @@ import 'package:youtube_downloader/modules/download/providers/download_providers
 import 'package:youtube_downloader/modules/history/ui/pages/history_page.dart';
 import 'package:youtube_downloader/utils/newpipe_channel.dart';
 
+@pragma('vm:entry-point')
+void downloadCallback(String id, int status, int progress) {
+  // This runs in a background isolate; avoid interacting with UI directly.
+  // For now, just log to the console. System notifications are handled by the plugin.
+  log('Download update: id=$id status=$status progress=$progress%');
+}
+
 class DownloadPage extends ConsumerStatefulWidget {
   const DownloadPage({super.key});
 
@@ -22,6 +29,13 @@ class DownloadPage extends ConsumerStatefulWidget {
 class _DownloadPageState extends ConsumerState<DownloadPage> {
   final controller = ScrollController();
   final urlTextController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Register to receive download progress notifications (system notifications handled by plugin)
+    FlutterDownloader.registerCallback(downloadCallback);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -201,6 +215,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
   Widget _buildVideoInfo(VideoInfo? video) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+    DateTime? uploaded;
+    if (video?.uploadDate.isNotEmpty == true) {
+      uploaded = DateTime.tryParse(video!.uploadDate);
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -217,8 +235,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
               ),
               TextSpan(text: " on "),
               TextSpan(
-                text: video?.uploadDate.isNotEmpty == true
-                    ? video!.uploadDate
+                text: uploaded != null
+                    ? DateFormat("d MMMM y 'at' hh:mm a").format(uploaded.toLocal())
                     : DateFormat("d MMMM y 'at' hh:mm a").format(DateTime.now()),
                 style: textTheme.small.copyWith(color: colorScheme.textPrimary, fontWeight: FontWeight.bold),
               ),

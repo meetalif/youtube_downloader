@@ -104,7 +104,8 @@ object NewPipeBridge: MethodChannel.MethodCallHandler {
                             "title" to extractor.name,
                             "author" to (extractor.uploaderName ?: ""),
                             "thumbnailUrl" to thumbUrl,
-                            "uploadDate" to (extractor.uploadDate?.toString() ?: "")
+                            // Format upload date to ISO string if available
+                            "uploadDate" to (try { extractor.uploadDate?.offsetDateTime()?.toString() } catch (e: Exception) { null } ?: "")
                         )
                         result.success(info)
                     } catch (e: Exception) {
@@ -122,35 +123,20 @@ object NewPipeBridge: MethodChannel.MethodCallHandler {
                         val extractor = service.getStreamExtractor(handler)
                         extractor.fetchPage()
                         val streams = mutableListOf<Map<String, Any?>>()
+                        // Only include muxed (audio+video) streams where mimeType contains mp4
                         extractor.videoStreams.forEach { vs ->
-                            streams.add(
-                                mapOf(
-                                    "url" to vs.url,
-                                    "format" to (vs.format?.mimeType ?: ""),
-                                    "quality" to vs.resolution,
-                                    "isVideoOnly" to false
+                            val mime = vs.format?.mimeType ?: ""
+                            if (mime.contains("mp4", ignoreCase = true)) {
+                                streams.add(
+                                    mapOf(
+                                        "url" to vs.url,
+                                        "format" to mime,
+                                        "quality" to vs.resolution,
+                                        "isVideoOnly" to false,
+                                        "isAudioOnly" to false
+                                    )
                                 )
-                            )
-                        }
-                        extractor.videoOnlyStreams.forEach { vo ->
-                            streams.add(
-                                mapOf(
-                                    "url" to vo.url,
-                                    "format" to (vo.format?.mimeType ?: ""),
-                                    "quality" to (vo.resolution ?: ""),
-                                    "isVideoOnly" to true
-                                )
-                            )
-                        }
-                        extractor.audioStreams.forEach { ao ->
-                            streams.add(
-                                mapOf(
-                                    "url" to ao.url,
-                                    "format" to (ao.format?.mimeType ?: ""),
-                                    "quality" to (ao.averageBitrate ?: 0),
-                                    "isAudioOnly" to true
-                                )
-                            )
+                            }
                         }
                         result.success(streams)
                     } catch (e: Exception) {
