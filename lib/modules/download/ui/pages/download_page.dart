@@ -1,10 +1,10 @@
-import 'dart:developer';
-
-import 'package:flutter/material.dart' show IconButton, ListTile;
+import 'package:flutter/material.dart' show IconButton;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 import 'package:waveui/waveui.dart';
 import 'package:youtube_downloader/modules/download/providers/download_providers.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 class DownloadPage extends ConsumerStatefulWidget {
   const DownloadPage({super.key});
@@ -59,6 +59,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
   }
 
   _buildBody(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return SingleChildScrollView(
       controller: controller,
       padding: EdgeInsets.all(16),
@@ -73,27 +75,68 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
           SizedBox(height: 16),
           WaveButton(
             text: 'Generate Video Content',
-            onTap: () => ref.read(youtubeFormatsProvider.notifier).loadFormats(urlTextController.text),
+            onTap: () {
+              ref.read(youtubeFormatsProvider.notifier).loadFormats(urlTextController.text);
+              ref.read(youtubeInfoProvider.notifier).loadInfo(urlTextController.text);
+            },
           ),
+          SizedBox(height: 16),
+          ref
+              .watch(youtubeInfoProvider)
+              .when(
+                data: (video) {
+                  if (video == null) return const Center(child: Text("No video"));
+                  return _buildVideoInfo(video);
+                },
+                error: (error, stackTrace) => Text(error.toString()),
+                loading: () => const WaveCircularProgressIndicator(),
+              ),
           SizedBox(height: 16),
           ref
               .watch(youtubeFormatsProvider)
               .when(
                 data: (formats) {
                   if (formats.isEmpty) return const Center(child: Text("No formats"));
-                  return ListView.builder(
+                  return GridView.builder(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: 16 / 9,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                    ),
                     shrinkWrap: true,
                     physics: NeverScrollableScrollPhysics(),
                     itemCount: formats.length,
                     itemBuilder: (context, index) {
                       final item = formats[index];
-                      final format = "${item.qualityLabel} | ${item.container.name}";
-                      return ListTile(
-                        title: Text(format),
-                        onTap: () async {
-                          final url = item.url.toString();
-                          log(url);
-                        },
+                      return Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: colorScheme.outlineDivider),
+                        ),
+                        child: Stack(
+                          children: [
+                            Center(
+                              child: Text(
+                                item.container.name,
+                                style: TextStyle(
+                                  color: colorScheme.outlineDivider.withValues(alpha: 0.5),
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(item.qualityLabel, style: textTheme.h6),
+                                  Text('${item.size.totalMegaBytes.round()} MB', style: textTheme.body),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     },
                   );
@@ -103,6 +146,47 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
               ),
         ],
       ),
+    );
+  }
+
+  _buildVideoInfo(Video video) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(video.title, style: textTheme.h4),
+        SizedBox(height: 8),
+        RichText(
+          text: TextSpan(
+            text: "Uploaded by ",
+            style: textTheme.small.copyWith(color: colorScheme.textSecondary),
+            children: [
+              TextSpan(
+                text: video.author,
+                style: textTheme.small.copyWith(color: colorScheme.textPrimary, fontWeight: FontWeight.bold),
+              ),
+              TextSpan(text: " on "),
+              TextSpan(
+                text: DateFormat("d MMMM y 'at' hh:mm a").format(video.publishDate!),
+                style: textTheme.small.copyWith(color: colorScheme.textPrimary, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 16),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            children: [
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Image.network("https://i3.ytimg.com/vi/${video.id}/maxresdefault.jpg", fit: BoxFit.cover),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

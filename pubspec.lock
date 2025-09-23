@@ -310,6 +310,15 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_downloader:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: HEAD
+      resolved-ref: "4b28cbec41b2c51882d68522420b0787a03e8887"
+      url: "https://github.com/fluttercommunity/flutter_downloader.git"
+    source: git
+    version: "1.12.0"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -404,7 +413,7 @@ packages:
     source: hosted
     version: "4.1.2"
   intl:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: intl
       sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
@@ -906,4 +915,4 @@ packages:
     version: "2.5.2"
 sdks:
   dart: ">=3.9.2 <4.0.0"
-  flutter: ">=3.18.0-18.0.pre.54"
+  flutter: ">=3.27.0"
