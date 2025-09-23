@@ -117,6 +117,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
             onTap: () {
               ref.read(youtubeFormatsProvider.notifier).loadFormats(urlTextController.text);
               ref.read(youtubeInfoProvider.notifier).loadInfo(urlTextController.text);
+              FocusScope.of(context).unfocus();
             },
           ),
           SizedBox(height: 16),
