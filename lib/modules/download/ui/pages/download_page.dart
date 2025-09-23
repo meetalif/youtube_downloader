@@ -68,8 +68,6 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
   }
 
   _buildBody(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     return SingleChildScrollView(
       controller: controller,
       padding: EdgeInsets.all(16),
@@ -138,42 +136,60 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                           );
                           log((await FlutterDownloader.loadTasks())?.first.status.toString() ?? "");
                         },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: colorScheme.outlineDivider),
-                          ),
-                          child: Stack(
-                            children: [
-                              Center(
-                                child: Text(
-                                  item.container.name,
-                                  style: TextStyle(
-                                    color: colorScheme.outlineDivider.withValues(alpha: 0.5),
-                                    fontSize: 48,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(item.qualityLabel, style: textTheme.h6),
-                                    Text('${item.size.totalMegaBytes.round()} MB', style: textTheme.body),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        child: _buildFormatItem(item),
                       );
                     },
                   );
                 },
-                loading: () => const Center(child: WaveCircularProgressIndicator()),
+                loading: () => GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 16 / 9,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                  ),
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: 12,
+                  itemBuilder: (context, index) => Skeletonizer(enabled: true, child: _buildFormatItem(null)),
+                ),
                 error: (err, st) => Center(child: Text("Error: $err")),
               ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormatItem(StreamInfo? item) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colorScheme.outlineDivider),
+      ),
+      child: Stack(
+        children: [
+          if (item?.container.name != null)
+            Center(
+              child: Text(
+                item!.container.name,
+                style: TextStyle(
+                  color: colorScheme.outlineDivider.withValues(alpha: 0.5),
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(item?.qualityLabel ?? "1234p", style: textTheme.h6),
+                Text('${(item?.size.totalMegaBytes ?? 12).round()} MB', style: textTheme.body),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -209,11 +225,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
           borderRadius: BorderRadius.circular(16),
           child: Stack(
             children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Image.network(
-                  "https://i3.ytimg.com/vi/${video?.id ?? 'pbIv3Wupgmw'}/maxresdefault.jpg",
-                  fit: BoxFit.cover,
+              Container(
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Image.network(
+                    "https://i3.ytimg.com/vi/${video?.id ?? 'pbIv3Wupgmw'}/maxresdefault.jpg",
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ],
