@@ -56,6 +56,7 @@ object NewPipeBridge: MethodChannel.MethodCallHandler {
     private const val CHANNEL = "com.example.youtube_downloader/newpipe"
     private var channel: MethodChannel? = null
     private var initialized = false
+    private val http = OkHttpClient()
 
     fun attachTo(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         if (channel == null) {
@@ -84,6 +85,18 @@ object NewPipeBridge: MethodChannel.MethodCallHandler {
             } catch (e: Exception) {
                 Log.e("NewPipeBridge", "Init error", e)
             }
+        }
+    }
+
+    private fun headSize(url: String?): Long? {
+        if (url.isNullOrEmpty()) return null
+        return try {
+            val req = OkRequest.Builder().url(url).head().build()
+            http.newCall(req).execute().use { resp ->
+                resp.header("Content-Length")?.toLongOrNull()
+            }
+        } catch (_: Exception) {
+            null
         }
     }
 
@@ -144,7 +157,8 @@ object NewPipeBridge: MethodChannel.MethodCallHandler {
                                     "quality" to vs.resolution,
                                     "isVideoOnly" to false,
                                     "isAudioOnly" to false,
-                                    "fileExtension" to extFromMime(mime)
+                                    "fileExtension" to extFromMime(mime),
+                                    "sizeBytes" to try { headSize(vs.url) } catch (_: Exception) { null }
                                 )
                             )
                         }
@@ -158,7 +172,8 @@ object NewPipeBridge: MethodChannel.MethodCallHandler {
                                     "quality" to (vo.resolution ?: ""),
                                     "isVideoOnly" to true,
                                     "isAudioOnly" to false,
-                                    "fileExtension" to extFromMime(mime)
+                                    "fileExtension" to extFromMime(mime),
+                                    "sizeBytes" to try { headSize(vo.url) } catch (_: Exception) { null }
                                 )
                             )
                         }
@@ -172,7 +187,8 @@ object NewPipeBridge: MethodChannel.MethodCallHandler {
                                     "quality" to (ao.averageBitrate ?: 0),
                                     "isVideoOnly" to false,
                                     "isAudioOnly" to true,
-                                    "fileExtension" to extFromMime(mime)
+                                    "fileExtension" to extFromMime(mime),
+                                    "sizeBytes" to try { headSize(ao.url) } catch (_: Exception) { null }
                                 )
                             )
                         }

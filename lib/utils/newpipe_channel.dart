@@ -32,6 +32,7 @@ class StreamItem {
   final bool isVideoOnly;
   final bool isAudioOnly;
   final String fileExtension; // e.g. mp4 or m4a
+  final int? sizeBytes;
   const StreamItem({
     required this.url,
     required this.format,
@@ -39,6 +40,7 @@ class StreamItem {
     required this.isVideoOnly,
     required this.isAudioOnly,
     required this.fileExtension,
+    this.sizeBytes,
   });
 
   factory StreamItem.fromMap(Map map) => StreamItem(
@@ -48,6 +50,7 @@ class StreamItem {
         isVideoOnly: (map['isVideoOnly'] ?? false) as bool,
         isAudioOnly: (map['isAudioOnly'] ?? false) as bool,
         fileExtension: (map['fileExtension'] ?? 'mp4') as String,
+        sizeBytes: (map['sizeBytes']) is int ? map['sizeBytes'] as int : (map['sizeBytes'] is double ? (map['sizeBytes'] as double).toInt() : null),
       );
 }
 

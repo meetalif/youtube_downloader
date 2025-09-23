@@ -12,6 +12,8 @@ import 'package:youtube_downloader/modules/download/providers/download_providers
 import 'package:youtube_downloader/modules/history/ui/pages/history_page.dart';
 import 'package:youtube_downloader/utils/newpipe_channel.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:youtube_downloader/modules/common/providers/overlay_provider.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 @pragma('vm:entry-point')
 void downloadCallback(String id, int status, int progress) {
@@ -131,7 +133,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                   return GridView.builder(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
-                      childAspectRatio: 16 / 9,
+                      childAspectRatio: 16 / 11,
                       mainAxisSpacing: 8,
                       crossAxisSpacing: 8,
                     ),
@@ -152,6 +154,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
 
                           final safeFileName = "${title}_$quality.$container".replaceAll(RegExp(r'[^\w\s.-]'), '_');
 
+                          // Show overlay and toast on start
+                          ref.read(overlayControllerProvider.notifier).show('Starting download...');
+                          Fluttertoast.showToast(msg: 'Download started');
                           await FlutterDownloader.enqueue(
                             url: item.url,
                             headers: {},
@@ -160,7 +165,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                             showNotification: true,
                             openFileFromNotification: true,
                           );
-                          log((await FlutterDownloader.loadTasks())?.first.status.toString() ?? "");
+                          ref.read(overlayControllerProvider.notifier).hide();
                         },
                         child: _buildFormatItem(item),
                       );
@@ -170,7 +175,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                 loading: () => GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
-                    childAspectRatio: 16 / 9,
+                    childAspectRatio: 16 / 11,
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 8,
                   ),
@@ -217,18 +222,32 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                   item == null
                       ? ''
                       : item.isAudioOnly
-                          ? 'Audio Only'
-                          : item.isVideoOnly
-                              ? 'Video Only'
-                              : 'Audio + Video',
+                      ? 'Audio Only'
+                      : item.isVideoOnly
+                      ? 'Video Only'
+                      : 'Audio + Video',
                   style: textTheme.small,
                 ),
+                if (item?.sizeBytes != null) ...[
+                  SizedBox(height: 2),
+                  Text(_fmtSize(item!.sizeBytes!), style: textTheme.small),
+                ],
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  String _fmtSize(int bytes) {
+    const kb = 1024;
+    const mb = kb * 1024;
+    const gb = mb * 1024;
+    if (bytes >= gb) return '${(bytes / gb).toStringAsFixed(2)} GB';
+    if (bytes >= mb) return '${(bytes / mb).toStringAsFixed(2)} MB';
+    if (bytes >= kb) return '${(bytes / kb).toStringAsFixed(2)} KB';
+    return '$bytes B';
   }
 
   Widget _buildVideoInfo(VideoInfo? video) {
