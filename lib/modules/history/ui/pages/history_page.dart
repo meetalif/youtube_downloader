@@ -93,7 +93,11 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                           Row(
                             children: [
                               Expanded(
-                                child: WaveLinearProgressIndicator(
+                                child: LinearProgressIndicator(
+                                  minHeight: 6,
+                                  borderRadius: BorderRadius.circular(3),
+                                  color: colorScheme.brandPrimary,
+                                  backgroundColor: colorScheme.brandPrimary.withValues(alpha: 0.1),
                                   value: (task.progress) <= 0 ? null : (task.progress / 100.0),
                                 ),
                               ),
