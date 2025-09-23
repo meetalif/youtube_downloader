@@ -14,6 +14,8 @@ class OverlayController extends _$OverlayController {
   }
 
   void hide() {
-    state = (visible: false, message: null);
+    Future.delayed(const Duration(seconds: 2), () {
+      state = (visible: false, message: null);
+    });
   }
 }

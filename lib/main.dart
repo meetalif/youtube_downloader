@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart' show MaterialApp;
+import 'dart:ui';
+
+import 'package:flutter/material.dart' show MaterialApp, Colors;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,13 +29,18 @@ class MainApp extends StatelessWidget {
               children: [
                 child!,
                 if (overlay.visible)
-                  Positioned.fill(
-                    child: ColoredBox(
-                      color: const Color(0x99000000),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [WaveCircularProgressIndicator()],
+                  BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                    child: Positioned.fill(
+                      child: ColoredBox(
+                        color: const Color.fromARGB(90, 0, 0, 0),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              WaveCircularProgressIndicator(color: Colors.white, backgroundColor: Colors.white30),
+                            ],
+                          ),
                         ),
                       ),
                     ),
