@@ -18,6 +18,9 @@ class HistoryPage extends ConsumerWidget {
           .watch(historyProvider)
           .when(
             data: (tasks) {
+              if (tasks.isEmpty) {
+                return const Center(child: Text('No history'));
+              }
               return ListView.builder(
                 itemCount: tasks.length,
                 itemBuilder: (context, index) {
