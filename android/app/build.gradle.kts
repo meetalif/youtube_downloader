@@ -42,3 +42,11 @@ android {
 flutter {
     source = "../.."
 }
+dependencies {
+    // Depend on the NewPipeExtractor published coordinate; settings.gradle.kts substitutes it to the local included build
+    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.24.8")
+
+    // Optional: other Android dependencies
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+}
