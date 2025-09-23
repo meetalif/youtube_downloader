@@ -226,7 +226,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                 SizedBox(height: 4),
                 Text(
                   item == null
-                      ? ''
+                      ? 'Unknown'
                       : item.isAudioOnly
                       ? 'Audio Only'
                       : item.isVideoOnly
