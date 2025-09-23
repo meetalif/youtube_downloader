@@ -47,6 +47,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
     if (!notifStatus.isGranted) {
       await Permission.notification.request();
     }
+    if (!await Permission.manageExternalStorage.request().isGranted) {
+      await Permission.manageExternalStorage.request();
+    }
     if (!await Permission.storage.request().isGranted) {
       await Permission.storage.request();
     }
