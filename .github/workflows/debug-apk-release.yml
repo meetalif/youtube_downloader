@@ -1,0 +1,80 @@
+name: 🚀 Release Flutter Debug APK on Version Bump
+
+on:
+  push:
+    paths:
+      - pubspec.yaml
+    branches:
+      - main
+
+jobs:
+  release:
+    name: 📦 Build & Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧾 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: 💾 Cache Flutter Pub Packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-flutter-${{ hashFiles('pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
+      - name: 📦 Get Dependencies
+        run: flutter pub get
+
+      - name: 🔍 Extract and Validate Version from pubspec.yaml
+        id: version
+        run: |
+          RAW_VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          VERSION=$(echo "$RAW_VERSION" | cut -d'+' -f1)
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9\.]+)?$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            exit 1
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+          # Detect if version is a prerelease
+          if [[ "$VERSION" == *-* ]]; then
+            echo "PRERELEASE=true" >> $GITHUB_OUTPUT
+          else
+            echo "PRERELEASE=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🧪 Build Debug APK
+        run: flutter build apk --debug
+
+      - name: 🏷️ Create Git Tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag v${{ steps.version.outputs.VERSION }}
+          git push origin v${{ steps.version.outputs.VERSION }}
+
+      - name: 🚀 Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: 🔖 Debug Release v${{ steps.version.outputs.VERSION }}
+          body: |
+            ✅ **Flutter Debug APK Build**
+            🧾 Version: `v${{ steps.version.outputs.VERSION }}`
+            🛠️ Build Type: Debug (Pre-signed)
+            📂 File: `app-debug.apk`
+          prerelease: ${{ steps.version.outputs.PRERELEASE == 'true' }}
+          files: build/app/outputs/flutter-apk/app-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
